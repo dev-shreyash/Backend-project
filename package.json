@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "backend project done by shreaysh",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "backend",
     "fullstack"
   ],
   "author": "shreyash bhosale",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^3.1.0"
+  }
 }
