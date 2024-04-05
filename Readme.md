@@ -18,4 +18,10 @@ This is a backend project developed using Node.js and Express framework for buil
  *   implemented jwt token handling
  *   implemneted file handling with multer, cloudinary
 
+1.0>User Routes
+ *   Defined essential routes in /routes folder
+
 2>controllers setup
+ *  defined controllerl to handle user registrations
+ *  handled user data 
+ *  successfully created user in database
