@@ -286,7 +286,7 @@ const updateUserAvater =asyncHandler(async(req,res)=>{
 const updateUserCoverImage =asyncHandler(async(req,res)=>{
     const coverImageImageUrl=req.files?.path
     if(!coverImageImageUrl){
-        throw new ApiError(400,"Avtar file is missing")
+        throw new ApiError(400,"Cover Image file is missing")
     }
     const coverImage =await uploadOnCloudinary(coverImageImageUrl)
 

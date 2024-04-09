@@ -3,7 +3,6 @@ import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getUserWa
 import { upload } from "../middelwares/multer.middelware.js";
 import { verifyJWT } from "../middelwares/auth.middleware.js";
 
-
 const router =Router()
 
 router.route('/register').post(
@@ -35,7 +34,7 @@ router.route("/update-account").patch(verifyJWT,updateAccountDetails)
 
 router.route("/avatar").patch(verifyJWT,upload.single('image'), updateUserAvater)
 
-router.route("/cover-image").patch(verifyJWT,upload.single('/coverImage'), updateUserCoverImage)
+router.route("/cover-image").patch(verifyJWT,upload.single('coverImage'), updateUserCoverImage)
 
 router.route("/c/:username").get(verifyJWT,getUserChannelProfile)
 

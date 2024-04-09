@@ -14,6 +14,7 @@ This is a backend project developed using Node.js and Express framework for buil
  *   Database connection with mongoDB
  *   Error/response/async handling added in utils
  *   Created model schema in models
+ *   Added middelware for auth and multer
  *   Added cookie-parser, bcrypt for user data handlin
  *   implemented jwt token handling
  *   implemneted file handling with multer, cloudinary
@@ -25,3 +26,4 @@ This is a backend project developed using Node.js and Express framework for buil
  *  defined controllerl to handle user registrations
  *  handled user data 
  *  successfully created user in database
+ *  provided {registration, login, refreshAccessToken, changePassword, getCurrentUser, update:Profile-avatar-coverImage, get:channelProfile-watchHistory} controllers

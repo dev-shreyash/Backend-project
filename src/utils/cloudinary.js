@@ -13,7 +13,7 @@ const uploadOnCloudinary= async (localFilePath)=>{
     try{
         if(!localFilePath) return null
         const response =await cloudinary.uploader.upload(localFilePath,{
-            resource_type:'auto'
+            resource_type:'auto',
         })
       //  console.log("file is uploaded successfully",response.url)
       fs.unlinkSync(localFilePath)  
@@ -25,6 +25,25 @@ const uploadOnCloudinary= async (localFilePath)=>{
     }
 }
 
+// Upload video to Cloudinary
+const uploadVideoToCloudinary =async (localFilePath)=> {
+  try {
+    if(!localFilePath) return null
+
+      const result = await cloudinary.uploader.upload(localFilePath, {
+          resource_type: 'video',
+
+          metadata:true
+      });
+      console.log('Uploaded video to Cloudinary:', result)
+     // fs.unlinkSync(localFilePath) 
+      return result
+  } catch (error) {
+     // fs.unlinkSync(localFilePath) 
+      console.error('Error uploading video to Cloudinary:', error)
+      throw error
+  }
+}
 
 
-export {uploadOnCloudinary}
+export {uploadOnCloudinary,uploadVideoToCloudinary}
