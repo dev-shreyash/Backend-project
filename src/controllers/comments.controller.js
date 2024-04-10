@@ -37,6 +37,20 @@ const addComment =asyncHandler(async(req,res)=>
      if(!videoId){
          throw new ApiError(400,"video not found")
      }
+     if(!content){
+        throw new ApiError(400,"content not found")
+     }
+
+     const comment = await Comment.create({
+        owenr:userId,
+        video:videoId,
+        content
+     })
+     if(!comment){
+        throw new ApiError(400,"error while creating comment")
+     }
+
+     return res.status(200).json(new ApiResponse(200, comment, "Successfully created comment"))
      
    } catch (error) {
     console.error('Error adding comments:', error)
