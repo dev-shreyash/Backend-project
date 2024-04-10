@@ -101,17 +101,94 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
+    //update video details like title, description, thumbnail
+   const video = await Video.findById(videoId);
 
+   try {
+     if (!(video && videoowner === req.user._id)) {
+       throw new ApiError(400, "video not founded");
+     }
+   
+     const { title, description } = req.body;
+     const localThumbnail = req.file?.path;
+   
+     if (!(title && description)) {
+       throw new ApiError(404, "not founded anything");
+     }
+     if (!localThumbnail) {
+       throw new ApiError(404, "Not founded local path for thumbnail");
+     }
+   
+   
+     const thumbnail = await uploadOnCloudinary(localThumbnail);
+   
+     if (!localThumbnail) {
+       throw new ApiError(404, "Not found thumbnail url");
+     }
+     const updatedVideoDetails = await Video.findByIdAndUpdate(videoId, {
+       title,
+       description,
+       thumbnail: thumbnail?.url,
+     });
+   
+     return res.status(200).json(new ApiResponse(200, updatedVideoDetails, "Successfully updated"));
+ 
+   } catch (error) {
+    console.error('Error updating video:', error)
+    throw new ApiError(500, 'Server error, failed to update video') 
+   }
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
+    try {
+        if(!videoId){
+            throw new ApiError(404, "Video not found")
+        }
+        const video = await Video.findById(videoId);
+        if(!video && video.owener === req?.user._id){
+            throw new ApiError(400,"Your not eligible to delete video");
+
+        }
+
+        const deleteVideo= await Video.findByIdAndDelete(videoId)
+
+        return res.status(200).json(new ApiResponse(200, "Successfully deleted the video"))
+    } catch (error) {
+        console.error('Error deleting video:', error)
+        throw new ApiError(500, 'Server error, failed to delete video')     
+    }
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
+    if(!videoId){
+        throw new ApiError(400, "video not founded");
+    }
+
+    const video = await Video.findById(videoId)
+
+    try {
+        if (!(video && video.owner === req.user?._id)) {
+            throw new ApiError(400, "You are not eligible to publish video");
+          }
+
+          const isPublished= !video.isPublished
+
+          const togglesPublish= await Video.findByIdAndUpdate(videoId, {
+             $set:{isPublished: isPublished} 
+          }, {new: true}) 
+
+          if(!togglesPublish){
+            throw new ApiError(400, "Something went wrong to toggle the publish state");
+          }
+          return res.status(200).json(new ApiResponse(200, "Successfully updated video", video))
+    } catch (error) {
+         console.error('Error publishing video:', error)
+        throw new ApiError(500, 'Server error, failed to publish video')     
+    }
 })
 
 export {
