@@ -36,7 +36,9 @@ const getVideoComments = asyncHandler(async(req, res)=>{
 const addComment =asyncHandler(async(req,res)=>
 {
     const videoId=req.params.videoId
-    const {userId, content}=req.body
+    const {content}=req.body
+    const userId=req.user._id.toString()
+
   //  console.log("userID: ",userId,"\ncontent: ",content)
 
    try {
@@ -71,11 +73,13 @@ const addComment =asyncHandler(async(req,res)=>
 
 const updateComment = asyncHandler(async(req, res)=>
 {
-    //const videoId=req.params.videoId
-    //const userId=req.user._id
-    const commentId=req.params
+    
+    const {commentId}=req.params
 
     const{ updatedContent, userId}=req.body
+
+    const comment = await Comment.findById(commentId)
+
 
     try {
         if(!commentId){
@@ -88,7 +92,12 @@ const updateComment = asyncHandler(async(req, res)=>
         if(!userId){
             throw new ApiError(400,"userid not found")
         }
+        const commentOwner= await comment?.owner?._id.toString()
+       // console.log("commentOwner: ",commentOwner)
 
+        if (userId !== commentOwner) {
+            throw new ApiError(403, "You are not allowed to update this comment");
+        }
         const updatedComment = await Comment.findByIdAndUpdate(
             commentId,
              {
@@ -99,7 +108,7 @@ const updateComment = asyncHandler(async(req, res)=>
         if(!updatedComment){
             throw new ApiError(400,"error while updating comment")
         }
-        return res.status(200).json(new ApiResponse(200, updatingComment, "Successfully updated the comment"));
+        return res.status(200).json(new ApiResponse(200, updatedComment, "Successfully updated the comment"));
 
 
     } catch (error) {
@@ -109,7 +118,17 @@ const updateComment = asyncHandler(async(req, res)=>
 })
 
 const deleteComment =asyncHandler(async(req,res)=>{
-    const commentId=req.params
+    const commentId=req.params.commentId
+    const userId=req.user._id.toString()
+
+    console.log(userId)
+    const comment = await Comment.findById(commentId)
+    const commentOwner= await comment?.owner?._id.toString()
+    console.log(commentOwner)
+
+    if (userId !== commentOwner) {
+        throw new ApiError(403, "You are not allowed to delete this comment");
+    }
     try {
         if(!commentId){
             throw new ApiError(400,"comment not found")
@@ -120,7 +139,8 @@ const deleteComment =asyncHandler(async(req,res)=>{
         if(!deletingComment){
             throw new ApiError(400,"error while deleting comment")
         }
-        
+        return res.status(200).json(new ApiResponse(200, "Successfully deleted comment"))
+
     } catch (error) {
         console.error('Error deleting comments:', error)
         throw new ApiError(500, 'Server error, failed to delete comments')     
