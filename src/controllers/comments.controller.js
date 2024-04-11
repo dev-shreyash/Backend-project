@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose, { isValidObjectId }  from "mongoose"
 import { Comment } from "../models/comment.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -12,44 +12,36 @@ const getVideoComments = asyncHandler(async(req, res)=>{
     const{page=1,limit=10}=req.query
     try {
 
-        if(!videoId){
-            throw new ApiError(400,"video not found")
+        if (!isValidObjectId(videoId)) {
+            throw new ApiError(400, "Video id is not valid");
         }
-
-        const pipeline=[
-            {
-                $match:{
-                    videoId:mongoose.Types.ObjectId(videoId)
-                }
-
-            }
-        ]
-         
-        const comments=await Comment.aggregate(pipeline)
-        .sort({createdAt:-1})
-        .skip((page-1)*limit)
+        
+        const comments = await Comment.find({ video: videoId })
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
         .limit(limit)
         .exec()
-        
-        if (!comments) {
-            throw new ApiError(400,"comments not found") 
-        }
-        
+     console.log(comments)
+    if (!comments || !Array.isArray(comments) || comments.length === 0) {
+        throw new ApiError(404, "Comments not found")
+    }
+    return res.status(200).json(new ApiResponse(200, comments, "Successfully fetched comments"))
+
     } catch (error) {
         console.error('Error getting comments:', error)
         throw new ApiError(500, 'Server error, failed to get comments')     
     }
 })
 
-
 const addComment =asyncHandler(async(req,res)=>
 {
-    const videoId=req.params
+    const videoId=req.params.videoId
     const {userId, content}=req.body
+  //  console.log("userID: ",userId,"\ncontent: ",content)
 
    try {
      if(!userId){
-         throw new ApiError(400,"userid not found")
+         throw new ApiError(400,"userId not found")
      }
      if(!videoId){
          throw new ApiError(400,"video not found")
@@ -59,7 +51,7 @@ const addComment =asyncHandler(async(req,res)=>
      }
 
      const comment = await Comment.create({
-        owenr:userId,
+        owner:userId,
         video:videoId,
         content
      })

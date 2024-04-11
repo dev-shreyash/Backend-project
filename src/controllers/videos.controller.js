@@ -5,41 +5,46 @@ import {uploadOnCloudinary, uploadVideoToCloudinary} from '../utils/cloudinary.j
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken'
 import{Video} from  '../models/video.model.js';
+import mongoose, { isValidObjectId } from "mongoose";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //get all videos based on query, sort, pagination
+    const { page = 1, limit = 10, sortBy, sortType, userId } = req.query
     console.log("Request Query Parameters:", req.query)
-   
-    const skipedVideos = (page - 1) * 10;
 
-    const sortingVideo = {};
+    const skipedVideos = (page - 1) * limit
+
+    const sortingVideo = {}
     if (sortBy && sortType) {
-      sortingVideo[sortBy] = sortType === "ase" ? 1 : -1;
+        sortingVideo[sortBy] = sortType === "asc" ? 1 : -1
     } else {
-      sortingVideo["createdAt"] = -1;
+        sortingVideo["createdAt"] = -1
     }
 
     try {
-        if(!userId){
-            throw new ApiError(400, "user not found")
+        if (!userId) {
+            throw new ApiError(400, "User ID not found")
         }
-        const aggregationPipeline = [
-            { $match: { owner:userId } },
-            { $sort: sortingVideo },
-            { $skip: skipedVideos },
-            { $limit: parseInt(limit) }
-        ];
 
-        // Execute the aggregation pipeline
-        const videoList = await Video.aggregate(aggregationPipeline);
+        const videos = await Video.find({ owner: userId })
+            .sort(sortingVideo)
+            .skip(skipedVideos)
+            .limit(parseInt(limit))
 
-        res.status(200).json(new ApiResponse(200, videoList, "successfully get videos"))
+        if (videos.length === 0) {
+            throw new ApiError(404, "No videos found for the user")
+        }
+
+        videos.forEach(video => {
+            const videoOwner = video.owner?.toString()
+            console.log("videoOwner: ", videoOwner)
+        });
+
+        res.status(200).json(new ApiResponse(200, videos, "Successfully fetched videos"))
     } catch (error) {
-        console.error('Error getting videos:', error)
-        throw new ApiError(500, 'Server error, failed to fetch videos') 
+        console.error('Error getting videos:', error);
+        throw new ApiError(500, 'Server error, failed to fetch videos')
     }
-})
+});
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
@@ -102,6 +107,9 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //update video details like title, description, thumbnail
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Video Id is not valid")
+      }l
    const video = await Video.findById(videoId);
 
    try {
@@ -146,8 +154,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
         if(!videoId){
             throw new ApiError(404, "Video not found")
         }
-        const video = await Video.findById(videoId);
-        if(!video && video.owener === req?.user._id){
+        const video = await Video.findById(videoId)
+
+        const videoOwner = await video?.owner?._id.toString()
+       // console.log("videoOwnerId: ",videoOwner)
+        
+        const user = await req.user?._id.toString()
+       // console.log("userId: " ,user)
+  
+  
+          if (!(video && videoOwner === user)) {
             throw new ApiError(400,"Your not eligible to delete video");
 
         }
@@ -162,16 +178,24 @@ const deleteVideo = asyncHandler(async (req, res) => {
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
+    const  videoId  = req.params.videoId
+    console.log("videoId: ",videoId)
 
-    if(!videoId){
-        throw new ApiError(400, "video not founded");
-    }
-
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Video Id is not valid")
+      }
+      
     const video = await Video.findById(videoId)
 
+      const videoOwner = await video?.owner?._id.toString()
+     // console.log("videoOwnerId: ",videoOwner)
+      
+      const user = await req.user?._id.toString()
+     // console.log("userId: " ,user)
+
+
     try {
-        if (!(video && video.owner === req.user?._id)) {
+        if (!(video && videoOwner === user)) {
             throw new ApiError(400, "You are not eligible to publish video");
           }
 
@@ -184,7 +208,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
           if(!togglesPublish){
             throw new ApiError(400, "Something went wrong to toggle the publish state");
           }
-          return res.status(200).json(new ApiResponse(200, "Successfully updated video", video))
+          return res.status(200).json(new ApiResponse(200, "Successfully published video", await video))
     } catch (error) {
          console.error('Error publishing video:', error)
         throw new ApiError(500, 'Server error, failed to publish video')     
