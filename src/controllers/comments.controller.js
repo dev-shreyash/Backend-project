@@ -3,6 +3,7 @@ import { Comment } from "../models/comment.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
+import { Video } from "../models/video.model.js"
 
 
 
@@ -50,6 +51,10 @@ const addComment =asyncHandler(async(req,res)=>
      }
      if(!content){
         throw new ApiError(400,"content not found")
+     }
+     const video = await Video.findById(videoId);
+     if (!video || !video.isPublished) {
+         throw new ApiError(400, "Video not founded or publi");
      }
 
      const comment = await Comment.create({
