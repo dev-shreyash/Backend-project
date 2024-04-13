@@ -125,11 +125,16 @@ const removeVideoFromPlaylist= asyncHandler(async(req,res)=>{
              throw new ApiError(400, "Video not founded");
          }
 
-        await playlist.videos.delete(video)
-        const removeVideo = await playlist.save()
+         const index = playlist.videos.indexOf(videoId);
+         if (index > -1) {
+             playlist.videos.splice(index, 1);
+             await playlist.save();
+         }
+         return res.status(200).json(new ApiResponse(200, null, 'Successfully removed video from playlist'));
+ 
      } catch (error) {
-        console.error('Error adding video to playlist:', error)
-        throw new ApiError(500, 'Server error, failed to add video to playlist')         
+        console.error('Error removing video from playlist:', error)
+        throw new ApiError(500, 'Server error, failed from remove video to playlist')         
      }
 })
 
@@ -166,4 +171,4 @@ const deletePlaylist =asyncHandler(async(req,res)=>{
 })
 
 
-export {createPlaylist, updatePlaylist,addVideoToPlaylist}
+export {createPlaylist, updatePlaylist,addVideoToPlaylist, removeVideoFromPlaylist,deletePlaylist}
