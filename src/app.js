@@ -33,7 +33,7 @@ app.use("/api/v1/video", videoRouter)
 app.use("/api/v1/comment",commentRouter)
 app.use("/api/v1/like",likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
-app.use("/api/v1/subscriptions", subscriptionRouter)
+app.use("/api/v1/subscription", subscriptionRouter)
 app.use('/api/v1/dashboard',dashboardRouter)
 
 export{app}

@@ -123,7 +123,7 @@ const getChannelStats=asyncHandler(async(req,res)=>{
     }
 })
 
-const getChannelVideo=asyncHandler(async(req,res)=>{
+const getChannelVideos=asyncHandler(async(req,res)=>{
     try {
         const aggregate = [
           {
@@ -155,5 +155,5 @@ const getChannelVideo=asyncHandler(async(req,res)=>{
 
 export {
     getChannelStats,
-    getChannelVideo
+    getChannelVideos
 }

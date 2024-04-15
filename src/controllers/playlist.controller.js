@@ -12,7 +12,7 @@ const createPlaylist =asyncHandler(async(req,res)=>{
     if(!user){
         throw new ApiError(400, 'user id required')     
      }
-     if(!name || description){
+     if(!(name || description)){
         throw new ApiError(400, 'name and description required')     
      }
    try {
@@ -34,35 +34,36 @@ const createPlaylist =asyncHandler(async(req,res)=>{
 })
 
 
-const updatePlaylist = asyncHandler(async(req,res)=>{
-    const {name,description} = req.body
-    const playlistId =req.param.playlistId
-    if(!name || description){
-        throw new ApiError(400, 'name and description required')     
-     }
-     if(!playlistId){
-        throw new ApiError(400, 'playlist Id is requires')     
-     }
-     try {
-        const updatedPlaylist= await Playlist.findByIdAndUpdate(playlistId,{
-            name:name,
-            description:description
-        },{new:true})
-        if(!updatedPlaylist){
-            throw new ApiError(400, 'failed to update playlist')     
-         }
-         return res.status(200).json(new ApiResponse(200, updatedPlaylist, 'playlist updated successfully'))
-     } catch (error) {
+const updatePlaylist = asyncHandler(async (req, res) => {
+    const { playlistId } = req.params
+    const { name, description } = req.body
+
+    try {
+        if (!playlistId) {
+            throw new ApiError(400, 'Playlist ID is required')
+        }
+
+        const playlist = await Playlist.findByIdAndUpdate(
+            playlistId,
+            { name, description },
+            { new: true } 
+        );
+
+        if (!playlist) {
+            throw new ApiError(404, 'Playlist not found')
+        }
+
+        return res.status(200).json(new ApiResponse(200, playlist, 'Playlist updated successfully'))
+    } catch (error) {
         console.error('Error updating playlist:', error)
-        throw new ApiError(500, 'Server error, failed to update playlist')         
-     }
+        throw new ApiError(500, 'Server error, failed to update playlist')
+    }
 })
 
 
-
 const addVideoToPlaylist= asyncHandler(async(req,res)=>{
-    const playlistId =req.param.playlistId
-    const videoId =req.param.videoId
+    const playlistId =req.params.playlistId
+    const videoId =req.params.videoId
 
 
     if(!playlistId){
@@ -74,10 +75,11 @@ const addVideoToPlaylist= asyncHandler(async(req,res)=>{
      }
 
      try {
-        const playlist = await Playlist.findById(playlistId)
-        if(!playlist){
-            throw new ApiError(400, 'playlist not found')     
-         }
+        const playlist = await Playlist.findById(playlistId);
+        if (!playlist) {
+            throw new ApiError(404, 'Playlist not found');
+        }
+        
          const video = await Video.findById(videoId)
          
          if (!video || !video.isPublished) {
@@ -102,8 +104,8 @@ const addVideoToPlaylist= asyncHandler(async(req,res)=>{
 })
 
 const removeVideoFromPlaylist= asyncHandler(async(req,res)=>{
-    const playlistId =req.param.playlistId
-    const videoId =req.param.videoId
+    const playlistId =req.params.playlistId
+    const videoId =req.params.videoId
 
 
     if(!playlistId){
@@ -170,5 +172,49 @@ const deletePlaylist =asyncHandler(async(req,res)=>{
     }
 })
 
+const getPlaylistById = asyncHandler(async (req, res) => {
 
-export {createPlaylist, updatePlaylist,addVideoToPlaylist, removeVideoFromPlaylist,deletePlaylist}
+const { playlistId } = req.params
+
+if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "playlist id is not a valid objectid");
+}
+
+const playlist = await Playlist.findById(playlistId);
+
+if (!playlist) {
+    throw new ApiError(404, "playlist not founded")
+}
+
+return res.status(200).json(new ApiResponse(200, playlist, "Successfylly got the playlist by Id"))
+
+})
+
+
+const getUserPlaylists = asyncHandler(async (req, res) => {
+    const userId = req.params.userId
+
+    if (!userId) {
+        throw new ApiError(400, "User id is not valid")
+    }
+
+    try {
+        const usersPlaylist = await Playlist.find(
+            { 
+                owner: userId 
+            }
+        )
+
+        if (!usersPlaylist || usersPlaylist.length === 0) {
+            return res.status(404).json(new ApiResponse(404, null, "No playlist found"))
+        }
+
+        return res.status(200).json(new ApiResponse(200, usersPlaylist, "Successfully fetched the playlist"))
+    } catch (error) {
+        console.error('Error fetching user playlists:', error)
+        throw new ApiError(500, "Server error, failed to get user playlists")
+    }
+})
+
+
+export {createPlaylist, updatePlaylist,addVideoToPlaylist, removeVideoFromPlaylist,deletePlaylist,getPlaylistById , getUserPlaylists}
